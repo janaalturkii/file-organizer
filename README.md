@@ -219,7 +219,7 @@ organizer.py       # core logic: scanning and moving files
 cli.py             # command-line interface using argparse
 tests/
 init.py
-test_main.py       # automated test suite (7+ tests)
+test_main.py       # automated test suite (11+ tests)
 .gitignore
 README.md
 requirements.txt
