@@ -233,3 +233,29 @@ All tests should pass. The `-v` flag shows each test by name so you
 can see exactly what was checked. The tests cover happy paths (normal
 expected usage), average cases (multiple file types at once), and
 edge cases (empty folders, files with no extension, invalid paths).
+
+## Interactive mode
+
+Prompt for each file before moving it:
+
+```
+python -m file_organizer ~/Downloads --interactive
+```
+
+Combine with `--dry-run` to preview decisions without moving anything:
+
+```
+python -m file_organizer ~/Downloads --interactive --dry-run
+```
+
+Example prompt:
+
+```
+photo.jpg
+  Suggested: images/
+  (a) Accept suggested
+  (b) Choose another category
+  (c) Skip this file
+  (d) Create new custom category
+  Your choice [a/b/c/d]: a
+```
