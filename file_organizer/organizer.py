@@ -99,3 +99,20 @@ def organize_folder(source: Path) -> dict[str, int]:
         summary[dest_name] = summary.get(dest_name, 0) + 1
 
     return summary 
+
+def get_all_categories() -> list[str]:
+    """Return every known category name, for use in interactive prompts."""
+    return sorted(EXTENSION_MAP.keys()) + ["other"]
+
+
+def preview_folder(source: Path) -> dict[str, list[str]]:
+    """Group files by suggested destination WITHOUT moving anything."""
+    if not source.is_dir():
+        raise ValueError(f"Not a directory: {source}")
+    preview: dict[str, list[str]] = {}
+    for file_path in source.iterdir():
+        if not file_path.is_file():
+            continue
+        dest_name = get_destination(file_path.suffix)
+        preview.setdefault(dest_name, []).append(file_path.name)
+    return preview
