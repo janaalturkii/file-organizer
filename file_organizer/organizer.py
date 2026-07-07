@@ -1,5 +1,4 @@
-﻿
-import logging
+﻿import logging
 import shutil
 from pathlib import Path
 
@@ -22,18 +21,36 @@ EXTENSION_MAP: dict[str, list[str]] = {
     "archives":  [".zip", ".tar", ".gz"],
 }
 
+# The map actually used at runtime. Starts as a copy of the default; can be
+# replaced by set_extension_map() once config.py has merged in user settings.
+# We copy EXTENSION_MAP rather than pointing at it directly so that mutating
+# the active map at runtime never mutates the original defaults.
+_active_extension_map: dict[str, list[str]] = dict(EXTENSION_MAP)
+
+
+def get_extension_map() -> dict[str, list[str]]:
+    """Return the currently active extension map (defaults + any config merged in)."""
+    return _active_extension_map
+
+
+def set_extension_map(new_map: dict[str, list[str]]) -> None:
+    """Replace the active extension map (called by the CLI after loading config)."""
+    global _active_extension_map
+    _active_extension_map = new_map
+
 
 def get_destination(extension: str) -> str:
     """Return the folder name for a given file extension.
 
-    Loops through EXTENSION_MAP and returns the folder name whose
-    list contains the given extension. The comparison is
+    Loops through the active extension map and returns the folder name
+    whose list contains the given extension. The comparison is
     case-insensitive so .JPG and .jpg both return 'images'.
 
     If no match is found, returns 'other' so unknown file types
     are always handled gracefully instead of raising an error.
     """
-    for folder, extensions in EXTENSION_MAP.items():
+    extension_map = get_extension_map()
+    for folder, extensions in extension_map.items():
         if extension.lower() in extensions:
             return folder
     return "other"
@@ -98,11 +115,11 @@ def organize_folder(source: Path) -> dict[str, int]:
         # Count how many files went to each folder for the summary.
         summary[dest_name] = summary.get(dest_name, 0) + 1
 
-    return summary 
+    return summary
 
 def get_all_categories() -> list[str]:
     """Return every known category name, for use in interactive prompts."""
-    return sorted(EXTENSION_MAP.keys()) + ["other"]
+    return sorted(get_extension_map().keys()) + ["other"]
 
 
 def preview_folder(source: Path) -> dict[str, list[str]]:

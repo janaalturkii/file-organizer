@@ -259,3 +259,31 @@ photo.jpg
   (d) Create new custom category
   Your choice [a/b/c/d]: a
 ```
+
+## Custom Configuration
+
+You can customize how files are categorized without touching the code, using a config file or CLI flags.
+
+**Option 1: Global config** — place a file at `~/.file_organizer/config.yml`. It will be picked up automatically every run.
+
+**Option 2: Per-run config** — pass a path directly with `--config`:
+python -m file_organizer /path/to/folder --config my_config.yml
+
+**Option 3: One-off override** — add a single mapping without a file:
+python -m file_organizer /path/to/folder --add-extension .log:logs
+
+### Config file format
+
+See `config.example.yml` for a full example. Each key is a category name, and the value is a list of file extensions that belong to it:
+
+```yaml
+receipts:
+  - .pdf
+  - .xlsx
+```
+
+Config sources are merged in this order (later sources override earlier ones for the same extension):
+1. Built-in defaults
+2. `~/.file_organizer/config.yml` (if present)
+3. `--config <path>` (if passed)
+4. `--add-extension` (if passed)
