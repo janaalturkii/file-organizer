@@ -1,5 +1,8 @@
 import argparse
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 from file_organizer.organizer import (
     organize_folder,
@@ -9,6 +12,23 @@ from file_organizer.organizer import (
 )
 from file_organizer.interactive import run_interactive_organize, print_preview
 from file_organizer.config import load_config
+from file_organizer.logs import undo_run
+
+
+def setup_logging(quiet: bool, verbose: bool) -> None:
+    """Configure logging level based on CLI flags."""
+    if quiet:
+        level = logging.WARNING
+    elif verbose:
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
+
+    logging.basicConfig(
+        level=level,
+        format="%(message)s",
+        force=True,
+    )
 
 
 def main() -> None:
@@ -28,13 +48,45 @@ def main() -> None:
         metavar="EXT:CATEGORY",
         help="One-off mapping, e.g. --add-extension .log:logs. Can be used multiple times.",
     )
+    parser.add_argument(
+        "--undo",
+        nargs="?",
+        const="latest",
+        default=None,
+        help="Undo the last run, or a specific run by timestamp (e.g. --undo 20260708_112520)",
+    )
+
+    verbosity = parser.add_mutually_exclusive_group()
+    verbosity.add_argument("--quiet", action="store_true", help="Only show warnings and errors")
+    verbosity.add_argument("--verbose", action="store_true", help="Show debug output")
+
     args = parser.parse_args()
 
+    setup_logging(args.quiet, args.verbose)
+
+    # --undo is handled first and independently — it doesn't need the
+    # folder validation below, since it works off the saved run log,
+    # not the folder passed on the command line.
+    if args.undo:
+        timestamp = None if args.undo == "latest" else args.undo
+        try:
+            result = undo_run(timestamp)
+        except FileNotFoundError as e:
+            logger.error(str(e))
+            return
+
+        logger.info(f"Restored {len(result['restored'])} file(s), skipped {len(result['skipped'])}")
+        for path in result["restored"]:
+            logger.info(f"  Restored: {path}")
+        for path in result["skipped"]:
+            logger.warning(f"  Skipped: {path}")
+        return
+
     if not args.folder.exists():
-        print(f"Error: '{args.folder}' does not exist.")
+        logger.error(f"Error: '{args.folder}' does not exist.")
         return
     if not args.folder.is_dir():
-        print(f"Error: '{args.folder}' is not a folder.")
+        logger.error(f"Error: '{args.folder}' is not a folder.")
         return
 
     # Load and apply any config/overrides BEFORE we do anything with the
@@ -49,19 +101,23 @@ def main() -> None:
 
     if args.interactive:
         summary = run_interactive_organize(args.folder, dry_run=args.dry_run)
-        print("\n[Dry run complete]" if args.dry_run else "\nDone!")
+        logger.info("\n[Dry run complete]" if args.dry_run else "\nDone!")
         for folder, count in summary.items():
-            print(f"  {folder}/: {count} file(s)")
+            logger.info(f"  {folder}/: {count} file(s)")
         return
 
     if args.dry_run:
         preview = preview_folder(args.folder)
         print_preview(preview)
-        print("\n[Dry run — no files moved]")
+        logger.info("\n[Dry run — no files moved]")
         return
 
-    print(f"Organizing {args.folder} ...")
+    logger.info(f"Organizing {args.folder} ...")
     summary = organize_folder(args.folder)
-    print("Done!")
+    logger.info("Done!")
     for folder, count in summary.items():
-        print(f"  {folder}/: {count} file(s)")
+        logger.info(f"  {folder}/: {count} file(s)")
+
+
+if __name__ == "__main__":
+    main()
