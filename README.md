@@ -310,3 +310,9 @@ By default, the tool prints normal informational output (what moved where). Two 
 - `--verbose` — show detailed debug output
 python -m file_organizer <folder> --quiet
 python -m file_organizer <folder> --verbose
+
+## Week 2
+
+See [docs/WEEK2.md](docs/WEEK2.md) for a full retrospective of Week 2
+(interactive mode, config overrides, undo/transaction log, watch mode,
+and CI), including demo commands and a guide to reviewing the code.
