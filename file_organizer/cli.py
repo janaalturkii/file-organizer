@@ -22,18 +22,14 @@ def main() -> None:
     if args.interactive:
         summary = run_interactive_organize(args.folder, dry_run=args.dry_run)
         print("\n[Dry run complete]" if args.dry_run else "\nDone!")
-        for folder, count in summary.items():
-            print(f"  {folder}/: {count} file(s)")
-        return
-
-    if args.dry_run:
-        preview = preview_folder(args.folder)
-        print_preview(preview)
-        print("\n[Dry run — no files moved]")
+        print("\nHere is the details of the destination folder")
+        for i, (folder, count) in enumerate(summary.items(), start=1):
+            print(f"Folder {i}: {folder} - Count of Files ({count})")
         return
 
     print(f"Organizing {args.folder} ...")
     summary = organize_folder(args.folder)
     print("Done!")
-    for folder, count in summary.items():
-        print(f"  {folder}/: {count} file(s)")
+    print("\nHere is the details of the destination folder")
+    for i, (folder, count) in enumerate(summary.items(), start=1):
+        print(f"Folder {i}: {folder} - Count of Files ({count})")
