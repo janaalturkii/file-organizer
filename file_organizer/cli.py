@@ -108,32 +108,17 @@ def main() -> None:
         from file_organizer.watcher import watch_folder
 
         def organize_callback():
-            if args.interactive:
-                summary = run_interactive_organize(args.folder, dry_run=args.dry_run)
-                logger.info("\n[Dry run complete]" if args.dry_run else "\nDone!")
-                for folder, count in summary.items():
-                    logger.info(f"  {folder}/: {count} file(s)")
-            elif args.dry_run:
-                preview = preview_folder(args.folder)
-                print_preview(preview)
-                logger.info("\n[Dry run — no files moved]")
-            else:
-                summary = organize_folder(args.folder)
-                logger.info("Done!")
-                for folder, count in summary.items():
-                    logger.info(f"  {folder}/: {count} file(s)")
+            summary = organize_folder(args.folder)
+            logger.info(f"Organizing {args.folder} ...")
+            logger.info("Done!")
+            for folder, count in summary.items():
+                logger.info(f"  {folder}/: {count} file(s)")
 
         watch_folder(args.folder, organize_callback, debounce_seconds=args.debounce)
         return
 
     if args.interactive:
         summary = run_interactive_organize(args.folder, dry_run=args.dry_run)
-<<<<<<< HEAD
-        print("\n[Dry run complete]" if args.dry_run else "\nDone!")
-        print("\nHere is the details of the destination folder")
-        for i, (folder, count) in enumerate(summary.items(), start=1):
-            print(f"Folder {i}: {folder} - Count of Files ({count})")
-=======
         logger.info("\n[Dry run complete]" if args.dry_run else "\nDone!")
         for folder, count in summary.items():
             logger.info(f"  {folder}/: {count} file(s)")
@@ -143,17 +128,10 @@ def main() -> None:
         preview = preview_folder(args.folder)
         print_preview(preview)
         logger.info("\n[Dry run — no files moved]")
->>>>>>> feature/transaction-log
         return
 
     logger.info(f"Organizing {args.folder} ...")
     summary = organize_folder(args.folder)
-<<<<<<< HEAD
-    print("Done!")
-    print("\nHere is the details of the destination folder")
-    for i, (folder, count) in enumerate(summary.items(), start=1):
-        print(f"Folder {i}: {folder} - Count of Files ({count})")
-=======
     logger.info("Done!")
     for folder, count in summary.items():
         logger.info(f"  {folder}/: {count} file(s)")
@@ -161,4 +139,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
->>>>>>> feature/transaction-log
