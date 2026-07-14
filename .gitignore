@@ -5,3 +5,4 @@ __pycache__/
 .DS_Store
 test_folder/
 test_config.yml
+.file_organizer/

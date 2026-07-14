@@ -287,3 +287,32 @@ Config sources are merged in this order (later sources override earlier ones for
 2. `~/.file_organizer/config.yml` (if present)
 3. `--config <path>` (if passed)
 4. `--add-extension` (if passed)
+
+## Undo / Transaction Log
+
+Every real run (not `--dry-run`) writes a JSON log to `.file_organizer/logs/`, named by timestamp (e.g. `20260708_112520.json`). Each log records every file that was moved during that run — its original location and where it ended up.
+
+### Undoing a run
+
+Undo the most recent run:
+python -m file_organizer <folder> --undo
+
+Undo a specific run by its timestamp:
+python -m file_organizer <folder> --undo 20260708_112520
+
+If a file's original location is now occupied by something else, or the moved file can no longer be found, that file is skipped and reported instead of being overwritten.
+
+## Logging / Verbosity
+
+By default, the tool prints normal informational output (what moved where). Two flags let you control this:
+
+- `--quiet` — only show warnings and errors
+- `--verbose` — show detailed debug output
+python -m file_organizer <folder> --quiet
+python -m file_organizer <folder> --verbose
+
+## Week 2
+
+See [docs/WEEK2.md](docs/WEEK2.md) for a full retrospective of Week 2
+(interactive mode, config overrides, undo/transaction log, watch mode,
+and CI), including demo commands and a guide to reviewing the code.
