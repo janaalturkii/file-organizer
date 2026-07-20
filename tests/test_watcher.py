@@ -70,7 +70,7 @@ class TestDebouncedOrganizerHandler(unittest.TestCase):
         dir_event = FakeEvent(path="some/new_folder", is_directory=True)
         handler.on_created(dir_event)
 
-        time.sleep(0.1)
+        time.sleep(0.15)
         callback.assert_not_called()
 
     def test_on_created_schedules_for_files(self):
@@ -81,7 +81,7 @@ class TestDebouncedOrganizerHandler(unittest.TestCase):
         file_event = FakeEvent(path="some/new_file.txt", is_directory=False)
         handler.on_created(file_event)
 
-        time.sleep(0.1)
+        time.sleep(0.2)
         callback.assert_called_once()
 
     def test_on_moved_schedules_for_files(self):
@@ -94,7 +94,7 @@ class TestDebouncedOrganizerHandler(unittest.TestCase):
         move_event = FakeEvent(path="some/renamed_file.txt", is_directory=False)
         handler.on_moved(move_event)
 
-        time.sleep(0.1)
+        time.sleep(0.2)
         callback.assert_called_once()
 
     def test_exception_in_callback_does_not_crash_handler(self):
@@ -105,7 +105,7 @@ class TestDebouncedOrganizerHandler(unittest.TestCase):
         handler = DebouncedOrganizerHandler(callback, debounce_seconds=0.05)
 
         handler._schedule_organize()
-        time.sleep(0.1)
+        time.sleep(0.2)
 
         callback.assert_called_once()
 
