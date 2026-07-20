@@ -29,11 +29,19 @@ class DebouncedOrganizerHandler(FileSystemEventHandler):
         self.debounce_seconds = debounce_seconds
         self._timer = None
         self._lock = threading.Lock()
+        self._organizing = False  # True while organize_callback() is actively running
 
     def _schedule_organize(self):
         # Every new event cancels the old timer and starts a fresh one.
         # This means organize() only fires once things go quiet.
         with self._lock:
+            if self._organizing:
+                # This event is almost certainly caused by organize_callback()
+                # moving files (e.g. out of the watched top-level folder into
+                # a subfolder) — not new user activity. Ignore it so the
+                # organize pass doesn't trigger another pass of itself.
+                logger.debug("Ignoring event during active organize pass.")
+                return
             if self._timer is not None:
                 self._timer.cancel()
             self._timer = threading.Timer(self.debounce_seconds, self._run_organize)
@@ -42,12 +50,24 @@ class DebouncedOrganizerHandler(FileSystemEventHandler):
 
     def _run_organize(self):
         logger.info("Debounce period elapsed, running organize pass.")
+        with self._lock:
+            self._organizing = True
         try:
             self.organize_callback()
         except Exception:
+            # Intentionally broad: this runs on a background Timer thread.
+            # An uncaught exception here would silently kill the thread —
+            # watch mode would look alive but stop organizing with no
+            # visible error. Catch broadly, log with traceback, keep watching.
             logger.exception("Error while organizing during watch mode.")
+        finally:
+            with self._lock:
+                self._organizing = False
 
     def on_created(self, event):
+        # Note: we don't pass event.src_path to the callback — organize_callback()
+        # always re-scans the folder fresh when the debounce timer fires, so a
+        # file deleted before then is simply absent from that scan. No stale-path bug.
         if not event.is_directory:
             logger.debug("Detected new file: %s", event.src_path)
             self._schedule_organize()
