@@ -25,16 +25,23 @@ def write_runlog(source_folder: str, moves: list[dict]) -> Path:
         "moves": moves,
     }
 
-    with open(tmp_path, "w") as f:
-        json.dump(data, f, indent=2)
+    try:
+        with open(tmp_path, "w") as f:
+            json.dump(data, f, indent=2)
+        os.replace(tmp_path, log_path)
+    except OSError as e:
+        logger.error(f"Failed to write run log: {e}")
+        if tmp_path.exists():
+            tmp_path.unlink()
+        raise
 
-    os.replace(tmp_path, log_path)
     logger.debug(f"Run log written to {log_path}")
     return log_path
 
 
 def get_latest_log() -> Path | None:
     """Return the path to the most recent run log, or None if there are no logs."""
+    # Alphabetical sort works because timestamps are zero-padded YYYYMMDD_HHMMSS
     logs = sorted(LOG_DIR.glob("*.json"))
     return logs[-1] if logs else None
 
@@ -49,8 +56,14 @@ def undo_run(timestamp: str | None) -> dict:
     if not log_path or not log_path.exists():
         raise FileNotFoundError("No matching run log found.")
 
-    with open(log_path) as f:
-        data = json.load(f)
+    try:
+        with open(log_path) as f:
+            data = json.load(f)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Log file {log_path} is corrupted and cannot be read: {e}")
+
+    if "moves" not in data:
+        raise ValueError(f"Log file {log_path} is missing 'moves' data — cannot undo.")
 
     restored: list[str] = []
     skipped: list[str] = []
