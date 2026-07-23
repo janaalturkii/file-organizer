@@ -8,6 +8,11 @@ from file_organizer.logs import write_runlog
 logger = logging.getLogger(__name__)
 
 
+class ExitInteractiveMode(Exception):
+    """Raised when the user chooses to exit interactive mode early."""
+    pass
+
+
 def print_preview(preview: dict[str, list[str]], sample_size: int = 3) -> None:
     """Show counts and a few sample files per suggested folder."""
     print("\nPreview — suggested destinations:")
@@ -22,14 +27,18 @@ def print_preview(preview: dict[str, list[str]], sample_size: int = 3) -> None:
 def prompt_for_destination(
     file_name: str, suggested: str, available_categories: list[str]
 ) -> str | None:
-    """Ask the user what to do with one file. Returns the final category, or None to skip."""
+    """Ask the user what to do with one file. Returns the final category, or None to skip.
+
+    Raises ExitInteractiveMode if the user chooses to exit interactive mode entirely.
+    """
     print(f"\n{file_name}")
     print(f"  Suggested: {suggested}/")
     print("  (a) Accept suggested")
     print("  (b) Choose another category")
     print("  (c) Skip this file")
     print("  (d) Create new custom category")
-    choice = input("  Your choice [a/b/c/d]: ").strip().lower()
+    print("  (e) Exit interactive mode")
+    choice = input("  Your choice [a/b/c/d/e]: ").strip().lower()
 
     if choice in ("a", ""):
         return suggested
@@ -42,6 +51,8 @@ def prompt_for_destination(
     if choice == "d":
         new_category = input("  New category name: ").strip()
         return new_category or suggested
+    if choice == "e":
+        raise ExitInteractiveMode()
 
     print("  Not recognized — skipping file.")
     return None
@@ -99,8 +110,10 @@ def run_interactive_organize(source: Path, dry_run: bool = False) -> dict[str, i
                     "destination": str(destination_path),
                 })
                 summary[decision] = summary.get(decision, 0) + 1
+    except ExitInteractiveMode:
+        print("\nExiting interactive mode early. Saving progress so far...")
     finally:
-        # Log whatever moves succeeded, even if something above crashed partway through
+        # Log whatever moves succeeded, even if the user exited early or something crashed
         if not dry_run and moves:
             write_runlog(str(source), moves)
 
